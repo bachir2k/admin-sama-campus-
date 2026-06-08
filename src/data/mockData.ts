@@ -90,6 +90,14 @@ export interface StudentRecord {
   status: 'Active' | 'Bloquée' | 'En attente';
   bal: number;
   last: string;
+  dbId?: string;
+  firstName?: string;
+  promo?: string;
+  class?: string;
+  email?: string;
+  phone?: string;
+  cardNumber?: string;
+  mustChangePassword?: boolean;
 }
 
 export const STUDENTS_DATA: StudentRecord[] = [
