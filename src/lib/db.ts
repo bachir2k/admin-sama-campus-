@@ -2,6 +2,54 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import type { StudentRecord, Alert, FeedItem, Zone } from '../data/mockData'
 
+interface StudentRow {
+  id: string
+  full_name: string
+  first_name: string
+  student_number: string
+  class: string | null
+  promo: string | null
+  email: string | null
+  phone: string | null
+  must_change_password: boolean
+  cards: {
+    card_number: string
+    status: string
+    balance: number
+  } | {
+    card_number: string
+    status: string
+    balance: number
+  }[] | null
+}
+
+interface TransactionRow {
+  service: string
+  description: string | null
+  amount: number
+  created_at: string
+  status: string
+}
+
+interface FeedTransactionRow extends TransactionRow {
+  students: { full_name: string } | null
+}
+
+interface FraudAlertRow {
+  severity: Alert['sev']
+  type: string
+  location: string | null
+  detected_at: string
+  note: string | null
+  students: { full_name: string; student_number: string } | null
+}
+
+interface ZoneRow {
+  name: string
+  current_occupancy: number
+  capacity: number
+}
+
 // ── Format relative time ──────────────────────────────────
 function relTime(ts: string): string {
   const diff = Date.now() - new Date(ts).getTime()
@@ -33,14 +81,13 @@ export function useStudents() {
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    setLoading(true)
     supabase
       .from('students')
-      .select('*, cards(card_number, status, balance, last_used_at)')
+      .select('*, cards(card_number, status, balance)')
       .order('full_name')
       .then(({ data: rows }) => {
         if (rows) {
-          setData(rows.map((s: any) => {
+          setData(rows.map((s: StudentRow) => {
             const card = Array.isArray(s.cards) ? s.cards[0] : s.cards
             return {
               name: s.full_name,
@@ -48,15 +95,14 @@ export function useStudents() {
               dbId: s.id,
               firstName: s.first_name,
               cls: s.class || s.promo || '—',
-              promo: s.promo,
-              class: s.class,
-              email: s.email,
-              phone: s.phone,
+              promo: s.promo ?? undefined,
+              class: s.class ?? undefined,
+              email: s.email ?? undefined,
+              phone: s.phone ?? undefined,
               cardNumber: card?.card_number,
               mustChangePassword: s.must_change_password,
-              status: (STATUS_MAP[card?.status] || 'En attente') as StudentRecord['status'],
+              status: (STATUS_MAP[card?.status ?? ''] || 'En attente') as StudentRecord['status'],
               bal: card?.balance ?? 0,
-              last: card?.last_used_at ? relTime(card.last_used_at) : '—',
             }
           }))
         }
@@ -64,7 +110,7 @@ export function useStudents() {
       })
   }, [tick])
 
-  return { data, loading, refetch: () => setTick(t => t + 1) }
+  return { data, loading, refetch: () => { setLoading(true); setTick(t => t + 1) } }
 }
 
 // ── Student transactions ──────────────────────────────────
@@ -73,37 +119,38 @@ export function useStudentTransactions(studentDbId: string | null, limit = 5) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!studentDbId) {
-      setData([])
-      return
+    if (!studentDbId) return
+    const fetch = async () => {
+      setLoading(true)
+      supabase
+        .from('transactions')
+        .select('*')
+        .eq('student_id', studentDbId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+        .then(({ data: rows }) => {
+          if (rows) {
+            setData(rows.map((t: TransactionRow) => ({
+              svc: t.service,
+              icon: ICON_MAP[t.service] || 'card',
+              label: t.description || t.service,
+              who: '',
+              amount: t.amount,
+              when: new Date(t.created_at).toLocaleString('fr-FR', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+              }),
+              tint: TINT_MAP[t.service] || 'brown',
+              bad: t.status === 'refused',
+            })))
+          }
+          setLoading(false)
+        })
     }
-    setLoading(true)
-    supabase
-      .from('transactions')
-      .select('*')
-      .eq('student_id', studentDbId)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-      .then(({ data: rows }) => {
-        if (rows) {
-          setData(rows.map((t: any) => ({
-            svc: t.service,
-            icon: ICON_MAP[t.service] || 'card',
-            label: t.description || t.service,
-            who: '',
-            amount: t.amount,
-            when: new Date(t.created_at).toLocaleString('fr-FR', {
-              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-            }),
-            tint: TINT_MAP[t.service] || 'brown',
-            bad: t.status === 'refused',
-          })))
-        }
-        setLoading(false)
-      })
+
+    fetch();
   }, [studentDbId, limit])
 
-  return { data, loading }
+  return { data: studentDbId ? data : [], loading }
 }
 
 // ── Fraud alerts ──────────────────────────────────────────
@@ -119,8 +166,8 @@ export function useAlerts() {
       .order('detected_at', { ascending: false })
       .then(({ data: rows }) => {
         if (rows) {
-          setData(rows.map((a: any) => ({
-            sev: a.severity as Alert['sev'],
+          setData(rows.map((a: FraudAlertRow) => ({
+            sev: a.severity,
             type: a.type,
             who: a.students?.full_name || '—',
             id: a.students?.student_number || '—',
@@ -149,7 +196,7 @@ export function useFeed(limit = 20) {
       .limit(limit)
       .then(({ data: rows }) => {
         if (rows) {
-          setData(rows.map((t: any) => {
+          setData(rows.map((t: FeedTransactionRow) => {
             const parts = (t.students?.full_name || '—').split(' ')
             const who = parts.length > 1
               ? parts[0][0] + '. ' + parts.slice(1).join(' ')
@@ -188,7 +235,7 @@ export function useZones() {
       .order('name')
       .then(({ data: rows }) => {
         if (rows) {
-          setData(rows.map((z: any) => ({
+          setData(rows.map((z: ZoneRow) => ({
             name: z.name,
             now: z.current_occupancy,
             cap: z.capacity,
@@ -216,7 +263,7 @@ export function useOverviewStats() {
       supabase.from('fraud_alerts').select('id', { count: 'exact' }).eq('status', 'active'),
     ]).then(([txRes, attRes, fraudRes]) => {
       const txns = txRes.data || []
-      const volume = txns.reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0)
+      const volume = txns.reduce((sum: number, t: { amount: number }) => sum + Math.abs(t.amount), 0)
       setStats({
         txnCount: txRes.count || 0,
         volume,

@@ -89,7 +89,6 @@ export interface StudentRecord {
   cls: string;
   status: 'Active' | 'Bloquée' | 'En attente';
   bal: number;
-  last: string;
   dbId?: string;
   firstName?: string;
   promo?: string;
@@ -101,12 +100,12 @@ export interface StudentRecord {
 }
 
 export const STUDENTS_DATA: StudentRecord[] = [
-  { name: 'Awa Ndiaye', id: 'ETU-5821', cls: 'Master 1', status: 'Active', bal: 24500, last: 'il y a 5 min' },
-  { name: 'Moussa Sow', id: 'ETU-4471', cls: 'Licence 3', status: 'Bloquée', bal: 1200, last: 'il y a 4 min' },
-  { name: 'Fatou Ba', id: 'ETU-2208', cls: 'Master 2', status: 'Active', bal: 8750, last: 'il y a 22 min' },
-  { name: 'Ibrahima Diop', id: 'ETU-3390', cls: 'Licence 2', status: 'Active', bal: 540, last: 'il y a 2 h' },
-  { name: 'Aïcha Fall', id: 'ETU-6012', cls: 'Master 1', status: 'Active', bal: 33100, last: 'hier' },
-  { name: 'Cheikh Diallo', id: 'ETU-1187', cls: 'Licence 1', status: 'En attente', bal: 0, last: '—' },
+  { name: 'Awa Ndiaye', id: 'ETU-5821', cls: 'Master 1', status: 'Active', bal: 24500 },
+  { name: 'Moussa Sow', id: 'ETU-4471', cls: 'Licence 3', status: 'Bloquée', bal: 1200 },
+  { name: 'Fatou Ba', id: 'ETU-2208', cls: 'Master 2', status: 'Active', bal: 8750 },
+  { name: 'Ibrahima Diop', id: 'ETU-3390', cls: 'Licence 2', status: 'Active', bal: 540 },
+  { name: 'Aïcha Fall', id: 'ETU-6012', cls: 'Master 1', status: 'Active', bal: 33100 },
+  { name: 'Cheikh Diallo', id: 'ETU-1187', cls: 'Licence 1', status: 'En attente', bal: 0 },
 ];
 
 export interface FeedItem {
