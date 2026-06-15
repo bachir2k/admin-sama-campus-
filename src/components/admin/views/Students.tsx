@@ -128,6 +128,45 @@ function CredRow({ label, value, mono, secret }: { label: string; value: string;
   );
 }
 
+// ── Grouping helpers ────────────────────────────────────────
+// "Master 1" → niveau "Master", classe "Master 1"
+function parseClass(cls?: string): { niveau: string; classe: string } {
+  const c = (cls || '').trim();
+  if (!c) return { niveau: 'Sans classe', classe: 'Sans classe' };
+  const parts = c.split(' ');
+  if (parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])) {
+    return { niveau: parts.slice(0, -1).join(' '), classe: c };
+  }
+  return { niveau: c, classe: c };
+}
+
+const NIVEAU_ORDER = ['Licence', 'Master', 'Doctorat'];
+
+function groupStudents(list: StudentRecord[]) {
+  const map = new Map<string, Map<string, StudentRecord[]>>();
+  for (const s of list) {
+    const { niveau, classe } = parseClass(s.cls);
+    if (!map.has(niveau)) map.set(niveau, new Map());
+    const classes = map.get(niveau)!;
+    if (!classes.has(classe)) classes.set(classe, []);
+    classes.get(classe)!.push(s);
+  }
+  const niveaux = Array.from(map.keys()).sort((a, b) => {
+    if (a === 'Sans classe') return 1;
+    if (b === 'Sans classe') return -1;
+    const ia = NIVEAU_ORDER.indexOf(a), ib = NIVEAU_ORDER.indexOf(b);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return a.localeCompare(b);
+  });
+  return niveaux.map(niveau => ({
+    niveau,
+    count: Array.from(map.get(niveau)!.values()).reduce((n, a) => n + a.length, 0),
+    classes: Array.from(map.get(niveau)!.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
+      .map(([classe, students]) => ({ classe, students })),
+  }));
+}
+
 // ── Detail modal ──────────────────────────────────────────
 function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -192,7 +231,6 @@ function StudentDetailModal({ student, p, onClose }: { student: StudentRecord; p
             <DetailRow label="N° carte" value={student.cardNumber || '—'} mono />
             <DetailRow label="Statut" value={student.status} />
             <DetailRow label="Solde" value={`${student.bal.toLocaleString('fr-FR')} FCFA`} />
-            <DetailRow label="Dernière activité" value={student.last} />
           </div>
         </div>
 
@@ -221,11 +259,50 @@ function StudentDetailModal({ student, p, onClose }: { student: StudentRecord; p
   );
 }
 
+function StudentRow({ s, p, last, onDetail }: { s: StudentRecord; p: Palette; last: boolean; onDetail: () => void }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px', alignItems: 'center', padding: '13px 8px', borderBottom: last ? 'none' : '1px solid ' + p.line2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ width: 36, height: 36, borderRadius: '50%', background: p.cardGrad, color: p.cardInk, display: 'grid', placeItems: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+          {s.name.split(' ').map((x: string) => x[0]).join('')}
+        </span>
+        <div>
+          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: p.ink }}>{s.name}</div>
+          <div style={{ fontSize: 12, color: p.muted }}>{s.id}</div>
+        </div>
+      </div>
+      <span style={{ fontSize: 13.5, color: p.ink2 }}>{s.cls || '—'}</span>
+      <span><StatusPill p={p} s={s.status} /></span>
+      <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: p.ink }}><Money value={s.bal} /></span>
+      <button
+        onClick={onDetail}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, background: p.surfaceAlt, color: p.ink, border: '1px solid ' + p.line, borderRadius: 8, padding: '6px 11px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap' }}
+      >
+        <Icon name="user" size={14} color={p.ink} />
+        Détails
+      </button>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────
 export function Students({ p }: { p: Palette }) {
   const [q, setQ] = useState('');
+  const [niveauFilter, setNiveauFilter] = useState('');
+  const [classeFilter, setClasseFilter] = useState('');
   const { data, loading, refetch } = useStudents();
   const list = data.filter(s => (s.name + s.id).toLowerCase().includes(q.toLowerCase()));
+
+  // Available niveaux / classes (computed from all students, not the search-filtered list)
+  const allGroups = groupStudents(data);
+  const classesForNiveau = niveauFilter ? (allGroups.find(g => g.niveau === niveauFilter)?.classes.map(c => c.classe) ?? []) : [];
+
+  const filteredList = list.filter(s => {
+    const { niveau, classe } = parseClass(s.cls);
+    if (niveauFilter && niveau !== niveauFilter) return false;
+    if (classeFilter && classe !== classeFilter) return false;
+    return true;
+  });
 
   const [modal, setModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -250,8 +327,8 @@ export function Students({ p }: { p: Palette }) {
     try {
       const num = await generateStudentNumber();
       setGeneratedNumber(num);
-    } catch (e: any) {
-      setErr(e.message);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setGeneratingNumber(false);
     }
@@ -329,6 +406,24 @@ export function Students({ p }: { p: Palette }) {
             <Icon name="search" size={16} color={p.muted} />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" style={{ border: 'none', background: 'none', outline: 'none', fontFamily: BODY, fontSize: 13.5, color: p.ink, width: '100%' }} />
           </div>
+          <select
+            value={niveauFilter}
+            onChange={e => { setNiveauFilter(e.target.value); setClasseFilter(''); }}
+            style={{ background: p.surfaceAlt, color: p.ink, border: '1px solid ' + p.line, borderRadius: 10, padding: '9px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 13, cursor: 'pointer', outline: 'none' }}
+          >
+            <option value="">Tous niveaux</option>
+            {allGroups.map(g => <option key={g.niveau} value={g.niveau}>{g.niveau}</option>)}
+          </select>
+          {niveauFilter && (
+            <select
+              value={classeFilter}
+              onChange={e => setClasseFilter(e.target.value)}
+              style={{ background: p.surfaceAlt, color: p.ink, border: '1px solid ' + p.line, borderRadius: 10, padding: '9px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 13, cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="">Toutes classes</option>
+              {classesForNiveau.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
           <button
             onClick={openModal}
             style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#2B2A26', color: '#EDE7DB', border: 'none', borderRadius: 10, padding: '9px 15px', fontFamily: DISP, fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}
@@ -342,37 +437,16 @@ export function Students({ p }: { p: Palette }) {
           <div style={{ padding: '40px 0', textAlign: 'center', color: p.muted, fontFamily: DISP, fontWeight: 600 }}>Chargement…</div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '0 8px 10px', fontSize: 12, color: p.muted, fontWeight: 700, letterSpacing: '.03em', textTransform: 'uppercase', borderBottom: '1px solid ' + p.line }}>
-              <span>Étudiant</span><span>Classe</span><span>Carte</span><span>Solde</span><span>Dernière activité</span><span />
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px', alignItems: 'center', padding: '0 8px 10px', fontSize: 12, color: p.muted, fontWeight: 700, letterSpacing: '.03em', textTransform: 'uppercase', borderBottom: '1px solid ' + p.line }}>
+              <span>Étudiant</span><span>Classe</span><span>Carte</span><span>Solde</span><span />
             </div>
-            {list.length === 0 && (
+            {filteredList.length === 0 && (
               <div style={{ padding: '40px 0', textAlign: 'center', color: p.muted, fontSize: 14 }}>
-                {q ? 'Aucun résultat' : 'Aucun étudiant — cliquez sur "Nouvel étudiant" pour commencer'}
+                {q || niveauFilter || classeFilter ? 'Aucun résultat' : 'Aucun étudiant — cliquez sur "Nouvel étudiant" pour commencer'}
               </div>
             )}
-            {list.map((s, i) => (
-              <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', alignItems: 'center', padding: '13px 8px', borderBottom: i === list.length - 1 ? 'none' : '1px solid ' + p.line2 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: p.cardGrad, color: p.cardInk, display: 'grid', placeItems: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-                    {s.name.split(' ').map((x: string) => x[0]).join('')}
-                  </span>
-                  <div>
-                    <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: p.ink }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: p.muted }}>{s.id}</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: 13.5, color: p.ink2 }}>{s.cls}</span>
-                <span><StatusPill p={p} s={s.status} /></span>
-                <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: p.ink }}><Money value={s.bal} /></span>
-                <span style={{ fontSize: 13, color: p.muted }}>{s.last}</span>
-                <button
-                  onClick={() => setDetail(s)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, background: p.surfaceAlt, color: p.ink, border: '1px solid ' + p.line, borderRadius: 8, padding: '6px 11px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  <Icon name="user" size={14} color={p.ink} />
-                  Détails
-                </button>
-              </div>
+            {filteredList.map((s, i) => (
+              <StudentRow key={s.id} s={s} p={p} last={i === filteredList.length - 1} onDetail={() => setDetail(s)} />
             ))}
           </>
         )}
@@ -404,7 +478,7 @@ export function Students({ p }: { p: Palette }) {
                 onClick={async () => {
                   setGeneratingNumber(true);
                   try { setGeneratedNumber(await generateStudentNumber()); }
-                  catch (e: any) { setErr(e.message); }
+                  catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
                   finally { setGeneratingNumber(false); }
                 }}
                 disabled={generatingNumber}
