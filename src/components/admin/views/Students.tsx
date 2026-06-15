@@ -18,14 +18,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Input({ value, onChange, placeholder, type = 'text', required }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean;
+function Input({ value, onChange, placeholder, type = 'text', required, disabled }: {
+  value: string; onChange?: (v: string) => void; placeholder?: string; type?: string; required?: boolean; disabled?: boolean
 }) {
   return (
     <input
-      type={type} value={value} onChange={e => onChange(e.target.value)}
-      placeholder={placeholder} required={required}
-      style={{ padding: '10px 13px', borderRadius: 10, border: '1px solid rgba(43,42,38,.14)', background: '#F4F1EC', fontFamily: BODY, fontSize: 14, color: '#2B2A26', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+      type={type} value={value} onChange={e => onChange?.(e.target.value)}
+      placeholder={placeholder} required={required} disabled={disabled}
+      style={{ padding: '10px 13px', borderRadius: 10, border: '1px solid rgba(43,42,38,.14)', background: '#F4F1EC', fontFamily: BODY, fontSize: 14, color: '#2B2A26', outline: 'none', width: '100%', boxSizing: 'border-box', cursor: disabled ? 'not-allowed' : 'text' }}
     />
   );
 }
@@ -522,7 +522,7 @@ export function Students({ p }: { p: Palette }) {
                 <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 12, color: '#837E74', letterSpacing: '.08em', textTransform: 'uppercase' }}>Scolarité</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <Field label="Promo">
-                    <Input value={form.promo} onChange={set('promo')} placeholder="Master 1 · 2026" />
+                    <Input value={form.promo} onChange={set('promo')} placeholder="2026" />
                   </Field>
                   <Field label="Classe">
                     <Input value={form.class} onChange={set('class')} placeholder="Master 1" />
@@ -534,7 +534,7 @@ export function Students({ p }: { p: Palette }) {
               <div style={{ background: '#F4F1EC', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 12, color: '#837E74', letterSpacing: '.08em', textTransform: 'uppercase' }}>Carte NFC</div>
                 <Field label="Solde initial (FCFA)">
-                  <Input value={form.balance} onChange={set('balance')} placeholder="0" type="number" />
+                  <Input value={form.balance} disabled />
                 </Field>
                 <div style={{ fontSize: 12.5, color: '#837E74' }}>Le numéro de carte sera généré automatiquement.</div>
               </div>
