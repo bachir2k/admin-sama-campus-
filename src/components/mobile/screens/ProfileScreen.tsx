@@ -47,7 +47,7 @@ export function ProfileScreen({ p }: { p: Palette }) {
             <span style={{ width: 36, height: 36, borderRadius: 10, background: p.surfaceAlt, display: 'grid', placeItems: 'center' }}><Icon name={r.ic} size={19} color={p.brown} /></span>
             <span style={{ flex: 1, fontFamily: DISP, fontWeight: 600, fontSize: 15, color: p.ink }}>{r.label}</span>
             {r.toggle ? (
-              <Toggle on={r.toggle[0]} set={r.toggle[1]} p={p} />
+              <Toggle on={r.toggle[0]} set={() => r.toggle[1](!r.toggle[0])} p={p} />
             ) : (
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ color: p.muted, fontSize: 14 }}>{r.detail}</span>

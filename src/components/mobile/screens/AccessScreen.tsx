@@ -31,7 +31,7 @@ export function AccessScreen({ p }: { p: Palette }) {
           <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, color: p.ink }}>Accès sans contact (NFC)</div>
           <div style={{ fontSize: 12.5, color: p.muted }}>Ouvrir les portes en approchant le téléphone</div>
         </div>
-        <Toggle on={nfc} set={setNfc} p={p} />
+        <Toggle on={nfc} set={() => setNfc(v => !v)} p={p} />
       </div>
 
       <h3 style={{ margin: '24px 0 12px', fontFamily: DISP, fontWeight: 700, fontSize: 18, color: p.ink }}>Derniers accès</h3>
