@@ -1,6 +1,5 @@
-import React from 'react';
-import { Palette } from '../../theme/palette';
-import { Transaction } from '../../data/mockData';
+import type { Palette } from '../../theme/palette';
+import type { Transaction } from '../../data/mockData';
 import { Icon } from '../ui/Icon';
 import { Money } from '../ui/Money';
 

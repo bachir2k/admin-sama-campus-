@@ -1,4 +1,3 @@
-import React from 'react';
 import { type Palette, DISP } from '../../../theme/palette';
 import { useAlerts, useFeed, useOverviewStats } from '../../../lib/db';
 import { Icon } from '../../ui/Icon';

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Palette } from '../../../theme/palette';
+import { useState } from 'react';
+import type { Palette } from '../../../theme/palette';
 import { TXNS } from '../../../data/mockData';
 import { Money } from '../../ui/Money';
 import { TxnRow } from '../TxnRow';

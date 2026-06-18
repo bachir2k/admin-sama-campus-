@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Palette } from '../../../theme/palette';
+import { useState } from 'react';
+import type { Palette } from '../../../theme/palette';
 import { Icon } from '../../ui/Icon';
 import { Money } from '../../ui/Money';
 

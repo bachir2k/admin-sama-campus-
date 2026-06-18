@@ -1,16 +1,15 @@
-import React from 'react';
 import type { Palette } from '../../theme/palette';
 
 interface ToggleProps {
   on: boolean;
-  onToggle: () => void;
+  set: () => void;
   p: Palette;
 }
 
-export function Toggle({ on, onToggle, p }: ToggleProps) {
+export function Toggle({ on, set, p }: ToggleProps) {
   return (
     <button
-      onClick={onToggle}
+      onClick={set}
       style={{
         width: 46, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
         background: on ? p.ok : p.line, position: 'relative', transition: '.2s', flexShrink: 0,

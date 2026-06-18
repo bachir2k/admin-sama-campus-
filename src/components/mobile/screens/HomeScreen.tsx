@@ -1,5 +1,4 @@
-import React from 'react';
-import { Palette } from '../../../theme/palette';
+import type { Palette } from '../../../theme/palette';
 import { STUDENT, TXNS } from '../../../data/mockData';
 import { Icon } from '../../ui/Icon';
 import { Money } from '../../ui/Money';

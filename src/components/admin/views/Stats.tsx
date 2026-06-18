@@ -1,4 +1,3 @@
-import React from 'react';
 import { type Palette, DISP } from '../../../theme/palette';
 import { Panel, Bars, Donut } from '../shared';
 

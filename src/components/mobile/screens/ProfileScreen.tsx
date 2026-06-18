@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Palette } from '../../../theme/palette';
+import { useState } from 'react';
+import type { Palette } from '../../../theme/palette';
 import { STUDENT } from '../../../data/mockData';
 import { Icon } from '../../ui/Icon';
 import { Toggle } from '../../ui/Toggle';

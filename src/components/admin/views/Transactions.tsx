@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { type Palette, DISP } from '../../../theme/palette';
 import { useFeed } from '../../../lib/db';
 import { Panel, FeedRow } from '../shared';

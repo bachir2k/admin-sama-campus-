@@ -1,4 +1,3 @@
-import React from 'react';
 import { type Palette, DISP } from '../../../theme/palette';
 import { useZones, useFeed } from '../../../lib/db';
 import { Panel, FeedRow } from '../shared';

@@ -83,12 +83,13 @@ export function AgentServiceView({ p }: { p: Palette }) {
 
   // ── Vérifier Session: fetch recent transactions ─────────
   useEffect(() => {
-    supabase
-      .from('transactions')
-      .select('id, label, amount, status, created_at, student_name')
-      .order('created_at', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('transactions')
+          .select('id, label, amount, status, created_at, student_name')
+          .order('created_at', { ascending: false })
+          .limit(50);
         if (data && data.length > 0) {
           setHistory(data.map((r: any) => ({
             id: r.id,
@@ -101,8 +102,10 @@ export function AgentServiceView({ p }: { p: Palette }) {
         } else {
           setHistory(MOCK_HISTORY);
         }
-      })
-      .catch(() => setHistory(MOCK_HISTORY));
+      } catch {
+        setHistory(MOCK_HISTORY);
+      }
+    })();
   }, []);
 
   // ── Valider une transaction ───────────────────────────────
@@ -178,7 +181,7 @@ export function AgentServiceView({ p }: { p: Palette }) {
     t.label.toLowerCase().includes(query.toLowerCase())
   );
 
-  const btnStyle = (color: string, hover?: string): React.CSSProperties => ({
+  const btnStyle = (color: string): React.CSSProperties => ({
     width: '100%', padding: '11px 0', border: 'none', borderRadius: 11,
     background: color, color: '#fff', fontFamily: DISP, fontWeight: 700,
     fontSize: 14.5, cursor: 'pointer',

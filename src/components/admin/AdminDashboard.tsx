@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { scPalette, DISP, BODY } from '../../theme/palette';
 import { Icon } from '../ui/Icon';
 import { Overview } from './views/Overview';
