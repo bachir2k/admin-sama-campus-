@@ -7,8 +7,9 @@ import { Students } from './views/Students';
 import { Transactions } from './views/Transactions';
 import { AccessView } from './views/AccessView';
 import { Stats } from './views/Stats';
+import { AgentServiceView } from './views/AgentServiceView';
 
-type AdminView = 'overview' | 'fraud' | 'students' | 'txns' | 'access' | 'stats';
+type AdminView = 'overview' | 'fraud' | 'students' | 'txns' | 'access' | 'stats' | 'agent';
 
 const NAV: { key: AdminView; ic: string; label: string; badge?: number }[] = [
   { key: 'overview', ic: 'grid', label: "Vue d'ensemble" },
@@ -17,6 +18,7 @@ const NAV: { key: AdminView; ic: string; label: string; badge?: number }[] = [
   { key: 'txns', ic: 'card', label: 'Transactions' },
   { key: 'access', ic: 'scan', label: 'Accès temps réel' },
   { key: 'stats', ic: 'chart', label: 'Statistiques' },
+  { key: 'agent', ic: 'check', label: 'Agent-Service' },
 ];
 
 interface Props {
@@ -42,6 +44,7 @@ export function AdminDashboard({ userEmail, onLogout }: Props) {
       case 'txns': return <Transactions p={p} />;
       case 'access': return <AccessView p={p} />;
       case 'stats': return <Stats p={p} />;
+      case 'agent': return <AgentServiceView p={p} />;
     }
   };
 
