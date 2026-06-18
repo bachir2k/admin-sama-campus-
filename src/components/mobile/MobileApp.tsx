@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { scPalette } from '../../theme/palette';
 import { Icon } from '../ui/Icon';
 import { HomeScreen } from './screens/HomeScreen';
@@ -34,7 +34,7 @@ export function MobileApp({ variant = 'light', inFrame = false }: Props) {
   const baseTab: Screen | null = screen.startsWith('pay') ? 'pay' : screen === 'presences' ? null : screen as Screen;
   const showBack = screen === 'presences';
 
-  let content: React.ReactNode;
+  let content: ReactNode;
   switch (screen) {
     case 'home':         content = <HomeScreen p={p} go={go} />; break;
     case 'history':      content = <HistoryScreen p={p} />; break;

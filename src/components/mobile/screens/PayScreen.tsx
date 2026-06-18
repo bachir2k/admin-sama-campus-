@@ -55,6 +55,17 @@ export function PayScreen({ p, mode = 'pay' }: Props) {
             </button>
           </div>
         )
+      ) : paid ? (
+        <div style={{ textAlign: 'center', padding: '30px 0' }}>
+          <div style={{ width: 92, height: 92, borderRadius: '50%', background: p.okSoft, display: 'grid', placeItems: 'center', margin: '0 auto' }}>
+            <Icon name="check" size={48} color={p.ok} strokeWidth={2.6} />
+          </div>
+          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 21, color: p.ink, marginTop: 18 }}>Rechargement effectué</div>
+          <div style={{ color: p.muted, fontSize: 14.5, marginTop: 4 }}><Money value={amount} /> ajoutés à votre solde</div>
+          <button onClick={() => { setPaid(false); setAmount(10000); }} style={{ marginTop: 24, background: p.surface, border: `1px solid ${p.line}`, borderRadius: 999, padding: '12px 22px', fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color: p.ink, cursor: 'pointer' }}>
+            Nouveau rechargement
+          </button>
+        </div>
       ) : (
         <div>
           <div style={{ textAlign: 'center', background: p.surface, border: `1px solid ${p.line}`, borderRadius: 18, padding: '22px 0' }}>
@@ -80,8 +91,8 @@ export function PayScreen({ p, mode = 'pay' }: Props) {
               </button>
             ))}
           </div>
-          <button style={{ marginTop: 20, width: '100%', background: p.ink, color: p.surface, border: 'none', borderRadius: 14, padding: '15px 0', fontFamily: DISP, fontWeight: 700, fontSize: 15.5 }}>
-            Confirmer le rechargement
+          <button onClick={() => setPaid(true)} style={{ marginTop: 20, width: '100%', background: p.ink, color: p.surface, border: 'none', borderRadius: 14, padding: '15px 0', fontFamily: DISP, fontWeight: 700, fontSize: 15.5, cursor: 'pointer' }}>
+            Confirmer le rechargement · <Money value={amount} />
           </button>
         </div>
       )}
